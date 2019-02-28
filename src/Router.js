@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import createReactContext from 'create-react-context';
 
-const RouteContext = createReactContext({
+const RouteContext = React.createContext({
   path: '/',
   animate: true,
   animationDuration: '0.5s',

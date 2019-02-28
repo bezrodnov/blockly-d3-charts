@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { reaction } from 'mobx';
+import { observer } from 'mobx-react';
 import * as d3 from 'd3';
 
 import ChartContext from './ChartContext';
@@ -11,174 +11,72 @@ class CombinationChart extends Component {
     super(...arguments);
 
     this.svgRef = React.createRef();
-
-    this.state = {
-      svg: null,
-      charts: new Map(),
-      addChart: this.addChart.bind(this),
-      removeChart: this.removeChart.bind(this),
-    };
-
-    reaction(
-      () => {
-        const { data } = this.props.store;
-        return { data, trigger: data.every(d => null) };
-      },
-      this.syncState.bind(this),
-      { fireImmediately: true }
-    );
   }
 
   render() {
-    const { chartStyle, orientation, children, store, ...other} = this.props;
+    const { children, store } = this.props;
     return (
-      <div {...other} style={this.style}>
+      <div style={this.style}>
         <svg ref={this.svgRef}>
-          <ChartContext.Provider value={this.state}>
+          <ChartContext.Provider value={store}>
             {children}
+            {this.renderCharts()}
           </ChartContext.Provider>
         </svg>
       </div>
     );
   }
 
-  collectDomainValues() {
-    const { orientation, store } = this.props;
-    const dimensionValues = store.data.map(d => d[0]);
-
-    this.xDomain = [];
-    this.yDomain = [];
-
-    if (orientation === 'horizontal') {
-      this.yDomain = dimensionValues;
-      this.xDomain = this.collectChartValues();
-      this.xDomain = [d3.min(this.xDomain), d3.max(this.xDomain)];
-    } else {
-      this.xDomain = dimensionValues;
-      this.yDomain = this.collectChartValues();
-      this.yDomain = [d3.min(this.yDomain), d3.max(this.yDomain)];
-    }
-  }
-
-  collectChartValues() {
-    const values = [0];
-    for (const chart of this.state.charts.values()) {
-      chart.getValues(this.props.store.data).forEach(v => values.push(v));
-    }
-    return values;
-  }
-
-  onResize() {
-    this.syncState();
-  }
-
-  syncState() {
-    if (!this.svgRef.current) {
-      if (!this.syncStateInterval) {
-        this.syncStateInterval = setInterval(this.syncState.bind(this), 50);
-      }
-      return;
-    }
-    clearInterval(this.syncStateInterval);
-    delete this.syncStateInterval;
-    
-    this.collectDomainValues();
-
-    const rect = this.svgRef.current.parentNode.getBoundingClientRect();
-    const margin = this.chartStyle.margin;
-    const width = rect.width - margin.left - margin.right;
-    const height = rect.height - margin.top - margin.bottom;
-    
-    // Scale the range of the data in the domains
-    const scaleFn = isValueDomain => isValueDomain
-      ? d3.scaleLinear().nice()
-      : d3.scaleBand().padding(0.1);
-
-    const scaleX = scaleFn(this.props.orientation === 'horizontal')
-      .range([0, width])
-      .domain(this.xDomain);
-
-    const scaleY = scaleFn(this.props.orientation === 'vertical')
-      .range([height, 0])
-      .domain(this.yDomain);
-
-    // remove existing group (if any)
-    const container = this.svgRef.current;
-    d3.select(container).selectAll('g.charts').remove();
-
-    // append a 'group' element to 'svg'
-    // move the 'group' element to the top left margin
-    const svg = d3.select(container)
-      .attr('width', rect.width)
-      .attr('height', rect.height)
-      .insert('g', 'g')
-      .attr('class', 'charts')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
-    
-    const { orientation } = this.props;
-    this.setState({ svg, scaleX, scaleY, width, height, margin, orientation, container });
-  }
-
-  componentDidMount() {
-    this.syncState();
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.orientation !== this.props.orientation
-      || prevState.charts !== this.state.charts) {
-      this.syncState();
-      return;
-    }
-
-    const { scaleX, scaleY } = this.state;
-    const charts = this.state.charts.values();
-    const bandWidth = this.props.orientation === 'horizontal'
-      ? scaleY.bandwidth()
-      : scaleX.bandwidth();
+  renderCharts() {
+    const { bandScale, charts, data } = this.props.store;
+    const bandWidth = bandScale.bandwidth();
     
     // render chart which don't require additional space first
     let chartsRequiringSpace = 0;
-    for (const chart of charts) {
-      if (!chart.requiresSpace) {
-        chart.renderChart(this.props.store.data, bandWidth);
-      } else {
+    charts.forEach(chart => {
+      if (chart.requiresSpace) {
         chartsRequiringSpace++;
       }
-    }
+    });
 
     // render charts which require additional space
     let offset = 0;
     const size = bandWidth / chartsRequiringSpace;
-    this.state.charts.forEach(chart => {
+    charts.forEach(chart => {
       if (chart.requiresSpace) {
-        chart.renderChart(this.props.store.data, size, offset);
+        chart.renderChart(data, size, offset);
         offset += size;
+      } else {
+        chart.renderChart(data, bandWidth);
       }
     });
   }
 
-  componentWillUnmount() {
-    clearInterval(this.syncStateInterval);
-    delete this.syncStateInterval;
-  }
+  componentDidMount() {
+    // remove existing charts (if any)
+    d3.select(this.svgRef.current).selectAll('g.charts').remove();
 
-  addChart(chart) {
-    const chartId = chartIdGenerator();
-    this.setState(state => {
-      const charts = new Map(state.charts);
-      charts.set(chartId, chart);
-      return { charts };
-    });
-    return chartId;
-  }
-
-  removeChart(chartId) {
-    this.setState(state => {
-      const charts = new Map(state.charts);
-      charts.delete(chartId);
-      return { charts };
-    });
-    return chartId;
+    const { store } = this.props;
+    if (!store.svg) {
+      const rect = this.svgRef.current.parentNode.getBoundingClientRect();
+      const margin = this.chartStyle.margin;
+      const width = rect.width - margin.left - margin.right;
+      const height = rect.height - margin.top - margin.bottom;
+      const svg = d3.select(this.svgRef.current)
+        .attr('width', rect.width)
+        .attr('height', rect.height)
+        .attr('inner-width', width)
+        .attr('inner-height', height);
+      
+      svg.insert('g', 'g')
+        .attr('class', 'charts')
+        .attr('margin-left', margin.left)
+        .attr('margin-right', margin.right)
+        .attr('margin-top', margin.top)
+        .attr('margin-bottom', margin.bottom)
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+      store.setSvg(svg);
+    }
   }
 
   get chartStyle() {
@@ -192,7 +90,6 @@ class CombinationChart extends Component {
 
 CombinationChart.propTypes = {
   store: PropTypes.instanceOf(CombinationChartStore).isRequired,
-  orientation: PropTypes.oneOf(['horizontal', 'vertical']),
   chartStyle: PropTypes.shape({
     margin: PropTypes.shape({
       top: PropTypes.number,
@@ -206,6 +103,7 @@ CombinationChart.defaultProps = {
   orientation: 'vertical',
 };
 
+observer(CombinationChart);
 CombinationChart.displayName = 'CombinationChart';
 export default CombinationChart;
 
@@ -217,6 +115,3 @@ const DEFAULT_CHART_STYLE = {
     right: 50,
   },
 };
-
-let chartIdSeq = 0;
-const chartIdGenerator = () => `chart-${chartIdSeq++}`;

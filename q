@@ -1,0 +1,25 @@
+Initial commit
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+# On branch master
+# Changes to be committed:
+#	modified:   .gitignore
+#	modified:   package-lock.json
+#	modified:   package.json
+#	modified:   src/App.js
+#	new file:   src/InfoCard.js
+#	new file:   src/Router.js
+#	new file:   src/charts/SummaryChart.jsx
+#	new file:   src/charts/SummaryStore.jsx
+#	new file:   src/charts/combination/AreaChart.jsx
+#	new file:   src/charts/combination/AxisX.jsx
+#	new file:   src/charts/combination/AxisY.jsx
+#	new file:   src/charts/combination/BarChart.jsx
+#	new file:   src/charts/combination/ChartContext.jsx
+#	new file:   src/charts/combination/CombinationChart.jsx
+#	new file:   src/charts/combination/CombinationChartStore.jsx
+#	new file:   src/charts/combination/StackedBarChart.jsx
+#	new file:   src/charts/combination/Tooltip.jsx
+#	modified:   src/index.css
+#	deleted:    src/logo.svg
+#

@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "core-decorators": "^0.20.0",
-    "create-react-context": "^0.2.3",
     "d3": "^5.8.0",
     "mobx": "^4.8.0",
     "mobx-react": "^5.4.3",

@@ -11,8 +11,8 @@ class BarChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {context => {
-          this.context = context;
+        {store => {
+          this.store = store;
           return this.renderTooltip();
         }}
       </ChartContext.Consumer>
@@ -20,8 +20,8 @@ class BarChart extends Component {
   }
 
   componentDidMount() {
-    if (this.context) {
-      this.chartId = this.context.addChart({
+    if (this.store) {
+      this.chartId = this.store.addChart({
         chartType: 'bar',
         requiresSpace: true,
         renderChart: this.renderChart.bind(this),
@@ -32,9 +32,9 @@ class BarChart extends Component {
 
   componentWillUnmount() {
     this.unmounting = true;
-    if (this.chartId && this.context) {
-      this.context.svg.selectAll(`.bar.${this.chartId}`).remove();
-      this.context.removeChart(this.chartId);
+    if (this.chartId && this.store) {
+      this.store.svg.selectAll(`g.charts .bar.${this.chartId}`).remove();
+      this.store.removeChart(this.chartId);
     }
   }
 
@@ -43,11 +43,8 @@ class BarChart extends Component {
       return;
     }
 
-    const { svg, scaleX, scaleY, orientation } = this.context;
-    
-    const isVertical = orientation === 'vertical';
-    const valueScale = isVertical ? scaleY : scaleX;
-    const bandScale = isVertical ? scaleX : scaleY;
+    const { svg, valueScale, bandScale, isVertical } = this.store;
+    const chartContainer = svg.selectAll('g.charts');
     
     const getStartX = d => isVertical
       ? bandScale(d[0]) + offset
@@ -63,7 +60,7 @@ class BarChart extends Component {
       ? valueScale(Math.max(this.getMeasureValue(d), 0))
       : getStartY(d);
 
-    svg.selectAll(`.bar.${this.chartId}`)
+    chartContainer.selectAll(`.bar.${this.chartId}`)
       .data(data)
       .enter().append('rect')
       .attr('class', `bar ${this.chartId}`)
@@ -73,7 +70,7 @@ class BarChart extends Component {
       .attr('height', isVertical ? 0 : size)
       .attr('fill', this.props.color);
     
-    svg.selectAll(`.bar.${this.chartId}`)
+    chartContainer.selectAll(`.bar.${this.chartId}`)
       .attr('measure-value', this.getMeasureValue)
       .on('mousemove', this.onMouseMove)
       .on('mouseout', this.onMouseOut)
@@ -91,7 +88,7 @@ class BarChart extends Component {
         : Math.abs(valueScale(0) - valueScale(this.getMeasureValue(d)))
       );
     
-    svg.selectAll(`.bar.${this.chartId}`)
+    chartContainer.selectAll(`.bar.${this.chartId}`)
       .exit()
       .remove();
   }
@@ -135,7 +132,7 @@ class BarChart extends Component {
   }
 
   get svgParent() {
-    return this.context.container.parentNode;
+    return this.store.svg.node().parentNode;
   }
 }
 

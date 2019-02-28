@@ -11,8 +11,8 @@ class StackedBarChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {context => {
-          this.context = context;
+        {store => {
+          this.store = store;
           return this.renderTooltip();
         }}
       </ChartContext.Consumer>
@@ -20,21 +20,19 @@ class StackedBarChart extends Component {
   }
 
   componentDidMount() {
-    if (this.context) {
-      this.chartId = this.context.addChart({
-        chartType: 'stackedbar',
-        requiresSpace: true,
-        renderChart: this.renderChart.bind(this),
-        getValues: this.getValues.bind(this),
-      });
-    }
+    this.chartId = this.store.addChart({
+      chartType: 'stackedbar',
+      requiresSpace: true,
+      renderChart: this.renderChart.bind(this),
+      getValues: this.getValues.bind(this),
+    });
   }
 
   componentWillUnmount() {
     this.unmounting = true;
-    if (this.chartId && this.context) {
-      this.context.svg.selectAll(`.stackedbar.${this.chartId}`).remove();
-      this.context.removeChart(this.chartId);
+    if (this.chartId && this.store) {
+      this.store.svg.selectAll(`g.charts .stackedbar.${this.chartId}`).remove();
+      this.store.removeChart(this.chartId);
     }
   }
 
@@ -43,11 +41,8 @@ class StackedBarChart extends Component {
       return;
     }
 
-    const { svg, scaleX, scaleY, orientation } = this.context;
-    
-    const isVertical = orientation === 'vertical';
-    const valueScale = isVertical ? scaleY : scaleX;
-    const bandScale = isVertical ? scaleX : scaleY;
+    const { svg, valueScale, bandScale, isVertical } = this.store;
+    const chartContainer = svg.selectAll('g.charts');
     
     const { measures } = this.props;
     measures.forEach((measure, index) => {
@@ -67,7 +62,7 @@ class StackedBarChart extends Component {
         ? valueScale(Math.max(this.getMeasureValue(d, index), 0))
         : getStartY(d);
 
-      svg.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
         .data(data)
         .enter().append('rect')
         .attr('class', `stackedbar ${this.chartId}-${index}`)
@@ -77,7 +72,7 @@ class StackedBarChart extends Component {
         .attr('height', isVertical ? 0 : size)
         .attr('fill', color);
       
-      svg.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
         .attr('measure-value', d => this.getMeasureValue(d, index))
         .on('mousemove', d => this.onMouseMove(d, name))
         .on('mouseout', this.onMouseOut)
@@ -95,7 +90,7 @@ class StackedBarChart extends Component {
           : Math.abs(valueScale(0) - valueScale(this.getMeasureValue(d, index)))
         );
       
-      svg.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
         .exit()
         .remove();
     });
@@ -151,7 +146,7 @@ class StackedBarChart extends Component {
   }
 
   get svgParent() {
-    return this.context.container.parentNode;
+    return this.store.svg.node().parentNode;
   }
 }
 

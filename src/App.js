@@ -15,8 +15,8 @@ const resetData = () => {
   const persons = ['Bob', 'Robin', 'Anne', 'Mark', 'Joe', 'Eve', 'Karen',
     'Kirsty', 'Chris', 'Lisa', 'Tom', 'Stacy', 'Charles', 'Mary'];
   
-  const rndVal = () => Math.random() > 0.1
-    ? Math.round(Math.random() * 100 + 50)
+  const rndVal = () => Math.random() > 0.05
+    ? Math.round(Math.random() * 100 + 30)
     : undefined;
 
   store.setData(persons.map(person => {
@@ -36,17 +36,16 @@ class App extends Component {
     this.state = {
       axisXPosition: 'bottom',
       axisYPosition: 'left',
-      orientation: 'vertical',
     };
 
     this.onAxisXPositionChange = this.onAxisXPositionChange.bind(this);
     this.onAxisYPositionChange = this.onAxisYPositionChange.bind(this);
     this.toggleRotation = this.toggleRotation.bind(this);
-    this.toggleOrientation = this.toggleOrientation.bind(this);
   }
 
   render() {
-    const { axisXPosition, axisYPosition, orientation, rotate } = this.state;
+    const { axisXPosition, axisYPosition, rotate } = this.state;
+    const { orientation } = store;
     return (
       <div style={containerStyle}>
         <div style={this.controlsStyle}>
@@ -63,29 +62,18 @@ class App extends Component {
             <option value="right">Right</option>
           </select>
           <button onClick={resetData} style={{ marginLeft: 20 }}>Reset data</button>
-          <button onClick={this.toggleOrientation} style={{ marginLeft: 20 }}>Toggle Orientation</button>
+          <button onClick={toggleOrientation} style={{ marginLeft: 20 }}>Toggle Orientation</button>
           <button onClick={this.toggleRotation} style={{ marginLeft: 20 }}>Toggle Rotation</button>
         </div>
         <div style={chartContainerStyle} className={rotate ? 'rotating' : ''}>
           <CombinationChart style={this.getChartStyle()} store={store} orientation={orientation}>
             <AxisX position={axisXPosition} />
             <AxisY position={axisYPosition} />
-            
+            <BarChart measure="previous" color="#55C" />
             <StackedBarChart measures={[
               {name: 'actual', color: '#5C5'}, {name: 'projected', color: '#C55'},
             ]}/>
-            
-          </CombinationChart>
-        </div>
-        <div style={chartContainerStyle} className={rotate ? 'rotating' : ''}>
-          <CombinationChart style={this.getChartStyle()} store={store} orientation="vertical">
-            <AxisY position="left" />
-            <AxisY position="right" />
-            <AxisX position="top" />
-            <AxisX position="bottom" />
-            <BarChart measure="actual" color="#5C5" />
-            <BarChart measure="projected" color="#C55" />
-            <AreaChart measure="previous" color="#55C" />
+            <AreaChart measure="actual" color="#73F" /> */}
           </CombinationChart>
         </div>
       </div>
@@ -102,12 +90,6 @@ class App extends Component {
 
   toggleRotation() {
     this.setState({ rotate: !this.state.rotate });
-  }
-
-  toggleOrientation() {
-    this.setState({
-      orientation: this.state.orientation === 'horizontal' ? 'vertical' : 'horizontal',
-    });
   }
 
   getChartStyle() {
@@ -140,4 +122,8 @@ const containerStyle = {
 const chartContainerStyle = {
   display: 'inline-block',
   verticalAlign: 'top',
+};
+
+const toggleOrientation = () => {
+  store.setOrientation(store.orientation === 'horizontal' ? 'vertical' : 'horizontal');
 };

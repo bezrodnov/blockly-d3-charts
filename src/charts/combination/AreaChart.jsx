@@ -11,8 +11,8 @@ class AreaChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {context => {
-          this.context = context;
+        {store => {
+          this.store = store;
           return this.renderTooltip();
         }}
       </ChartContext.Consumer>
@@ -20,21 +20,19 @@ class AreaChart extends Component {
   }
 
   componentDidMount() {
-    if (this.context) {
-      this.chartId = this.context.addChart({
-        chartType: 'area',
-        requiresSpace: false,
-        renderChart: this.renderChart.bind(this),
-        getValues: this.getValues.bind(this),
-      });
-    }
+    this.chartId = this.store.addChart({
+      chartType: 'area',
+      requiresSpace: false,
+      renderChart: this.renderChart.bind(this),
+      getValues: this.getValues.bind(this),
+    });
   }
 
   componentWillUnmount() {
     this.unmounting = true;
-    if (this.chartId && this.context) {
-      this.context.svg.selectAll(`.area.${this.chartId}`).remove();
-      this.context.removeChart(this.chartId);
+    if (this.chartId && this.store) {
+      this.store.svg.selectAll(`g.charts .area.${this.chartId}`).remove();
+      this.store.removeChart(this.chartId);
     }
   }
 
@@ -43,27 +41,29 @@ class AreaChart extends Component {
       return;
     }
 
-    const { svg, scaleX, scaleY, orientation } = this.context;
+    const { svg, valueScale, bandScale, isVertical } = this.store;
+    const chartContainer = svg.select('g.charts');
+    // remove previously rendered chart first
+    //chartContainer.selectAll(`.area.${this.chartId}`).remove();
     
-    const isVertical = orientation === 'vertical';
-    const valueScale = isVertical ? scaleY : scaleX;
-    const bandScale = isVertical ? scaleX : scaleY;
-    
+    const offset = size / 2;
     const area = d3.area()
-      .x(d => bandScale(d[0]))
+      .x(d => bandScale(d[0]) + offset)
       .y0(valueScale(0))
       .y1(d => valueScale(this.getMeasureValue(d)));
 
-    svg.append('path')
-      .attr('class', `area.${this.chartId}`)
+    chartContainer
       .datum(data)
+      .append('path')
+      .attr('class', `area ${this.chartId}`)
       .attr('fill', this.props.color)
-      .attr('fill-opacity', 0.7)
+      .attr('fill-opacity', 0.7);
+
+    chartContainer.select(`path.area.${this.chartId}`)
+      .transition()
+      .duration(500)
+      .attr('transform', isVertical ? '' : `scale(1, -1) rotate(-90)`)
       .attr('d', area);
-    
-    svg.selectAll(`path.area.${this.chartId}`)
-      .exit()
-      .remove();
   }
 
   getValues(data) {
@@ -105,7 +105,7 @@ class AreaChart extends Component {
   }
 
   get svgParent() {
-    return this.context.container.parentNode;
+    return this.store.svg.node().parentNode;
   }
 }
 
