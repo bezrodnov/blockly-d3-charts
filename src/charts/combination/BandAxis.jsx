@@ -5,7 +5,7 @@ import * as d3 from 'd3';
 
 import ChartContext from './ChartContext';
 
-class AxisX extends Component {
+class BandAxis extends Component {
   render() {
     return (
       <ChartContext.Consumer>
@@ -15,29 +15,30 @@ class AxisX extends Component {
   }
 }
 
-AxisX.propTypes = {
-  position: PropTypes.oneOf(['top', 'bottom', 'zero']),
+BandAxis.propTypes = {
+  verticalPosition: PropTypes.oneOf(['top', 'bottom']),
+  horizontalPosition: PropTypes.oneOf(['left', 'right']),
   labelColor: PropTypes.string,
   tickColor: PropTypes.string,
   axisColor: PropTypes.string,
 };
 
-AxisX.defaultProps = {
-  position: 'bottom',
+BandAxis.defaultProps = {
+  verticalPosition: 'bottom',
+  horizontalPosition: 'left',
   labelColor: '#33F',
   tickColor: '#33F',
   axisColor: '#33F',
 };
 
-AxisX.displayName = 'AxisX';
-export default AxisX;
+BandAxis.displayName = 'BandAxis';
+export default BandAxis;
 
 
 class Axis extends Component {
   render() {
-    const { position, labelColor, tickColor, axisColor, store } = this.props;
-    const { svg, isVertical, valueScale, bandScale } = store;
-    const scaleX = isVertical ? bandScale : valueScale;
+    const { labelColor, tickColor, axisColor, store } = this.props;
+    const { svg, isVertical, bandScale } = store;
     if (!svg) {
       return null;
     }
@@ -50,14 +51,15 @@ class Axis extends Component {
     }
     this.axisRef = svg.append('g').node();
 
-    const marginLeft = svg.select('g.charts').attr('margin-left');
-    const transform = `translate(${marginLeft}, ${this.offsetTop})`;
+    const transform = `translate(
+      ${isVertical ? this.marginLeft : this.offsetLeft},
+      ${isVertical ? this.offsetTop : this.marginLeft}
+    )`;
     this.axisRef.setAttribute('transform', transform);
 
-    const alignFn = position === 'top' ? d3.axisTop : d3.axisBottom;
     d3.select(this.axisRef)
       .attr('text-anchor', '')
-      .call(alignFn(scaleX));
+      .call(this.alignFn(bandScale));
     
     d3.select(this.axisRef).selectAll('g.tick text')
       .attr('fill', labelColor);
@@ -71,25 +73,35 @@ class Axis extends Component {
     return null;
   }
 
+  get marginLeft() {
+    return Number(this.props.store.svg.select('g.charts').attr('margin-left'));
+  }
+  
+  get marginTop() {
+    return Number(this.props.store.svg.select('g.charts').attr('margin-top'));
+  }
+
   get offsetTop() {
-    const { position, store } = this.props;
-    const marginOffset = Number(store.svg.select('g.charts').attr('margin-top'));
-    switch (position) {
-      case 'bottom':
-        return store.height + marginOffset;
-      case 'zero':
-        const { isVertical, valueScale, bandScale } = store;
-        return (isVertical ? valueScale(0) : bandScale(0)) + marginOffset;
-      case 'top':
-        return marginOffset;
-      default:
-        return 0;
+    const { verticalPosition, store } = this.props;
+    return this.marginTop + (verticalPosition === 'bottom' ? store.height : 0);
+  }
+
+  get offsetLeft() {
+    const { horizontalPosition, store } = this.props;
+    return this.marginLeft + (horizontalPosition === 'right' ? store.width : 0);
+  }
+
+  get alignFn() {
+    const { isVertical } = this.props.store;
+    if (isVertical) {
+      return this.props.verticalPosition === 'top' ? d3.axisTop : d3.axisBottom;
     }
+    return this.props.horizontalPosition === 'left' ? d3.axisLeft : d3.axisRight;
   }
 
   componentWillUnmount() {
     if (this.axisRef) {
-      this.axisRef.remove(); // TODO: test/validate
+      this.axisRef.remove();
     }
   }
 }

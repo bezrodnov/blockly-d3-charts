@@ -3,10 +3,10 @@ import { observer } from 'mobx-react';
 
 import CombinationChart from './charts/combination/CombinationChart';
 import CombinationChartStore from './charts/combination/CombinationChartStore';
-import AxisX from './charts/combination/AxisX';
-import AxisY from './charts/combination/AxisY';
 import AreaChart from './charts/combination/AreaChart';
 import BarChart from './charts/combination/BarChart';
+import BandAxis from './charts/combination/BandAxis';
+import ValueAxis from './charts/combination/ValueAxis';
 import StackedBarChart from './charts/combination/StackedBarChart';
 
 const store = new CombinationChartStore({ data: [] });
@@ -40,11 +40,10 @@ class App extends Component {
 
     this.onAxisXPositionChange = this.onAxisXPositionChange.bind(this);
     this.onAxisYPositionChange = this.onAxisYPositionChange.bind(this);
-    this.toggleRotation = this.toggleRotation.bind(this);
   }
 
   render() {
-    const { axisXPosition, axisYPosition, rotate } = this.state;
+    const { axisXPosition, axisYPosition } = this.state;
     const { orientation } = store;
     return (
       <div style={containerStyle}>
@@ -63,12 +62,12 @@ class App extends Component {
           </select>
           <button onClick={resetData} style={{ marginLeft: 20 }}>Reset data</button>
           <button onClick={toggleOrientation} style={{ marginLeft: 20 }}>Toggle Orientation</button>
-          <button onClick={this.toggleRotation} style={{ marginLeft: 20 }}>Toggle Rotation</button>
         </div>
-        <div style={chartContainerStyle} className={rotate ? 'rotating' : ''}>
+        <div style={chartContainerStyle}>
           <CombinationChart style={this.getChartStyle()} store={store} orientation={orientation}>
-            <AxisX position={axisXPosition} />
-            <AxisY position={axisYPosition} />
+            <BandAxis verticalPosition={axisXPosition} horizontalPosition={axisYPosition} />
+            <ValueAxis verticalPosition={axisXPosition} horizontalPosition={axisYPosition} />
+            
             <BarChart measure="previous" color="#55C" />
             <StackedBarChart measures={[
               {name: 'actual', color: '#5C5'}, {name: 'projected', color: '#C55'},
@@ -86,10 +85,6 @@ class App extends Component {
 
   onAxisYPositionChange({ target: select }) {
     this.setState({ axisYPosition: select.value });
-  }
-
-  toggleRotation() {
-    this.setState({ rotate: !this.state.rotate });
   }
 
   getChartStyle() {
