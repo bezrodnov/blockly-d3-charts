@@ -1,4 +1,4 @@
-import { decorate, observable, computed, action } from 'mobx';
+import { decorate, observable, computed, action, set, get } from 'mobx';
 import * as d3 from 'd3';
 
 class CombinationChartStore {
@@ -43,6 +43,40 @@ class CombinationChartStore {
     this.charts.delete(chartId);
   }
 
+  setChartMinMaxValue(chartId, minValue, maxValue) {
+    set(this.charts.get(chartId), { minValue, maxValue });
+  }
+
+  getChartSize(chartId) {
+    if (!this.charts.get(chartId).requiresSpace) {
+      return this.bandScale.bandwidth();
+    }
+    // calculate available size for each chart
+    let chartsRequiringSpace = 0;
+    this.charts.forEach(chart => {
+      if (chart.requiresSpace) {
+        chartsRequiringSpace++;
+      }
+    });
+    return this.bandScale.bandwidth() / chartsRequiringSpace;
+  }
+
+  getChartOffset(chartId) {
+    if (!this.charts.get(chartId).requiresSpace) {
+      return 0;
+    }
+    const size = this.getChartSize(chartId);
+    let offset = 0;
+    for (const id of this.charts.keys()) {
+      if (id !== chartId) {
+        offset += size;
+      } else {
+        break;
+      }
+    }
+    return offset;
+  }
+
   get width() {
     return this.svg ? Number(this.svg.attr('inner-width')) : 0;
   }
@@ -56,7 +90,7 @@ class CombinationChartStore {
     const end = this.isVertical ? 0 : this.width;
     return d3.scaleLinear()
       .range([start, end])
-      .domain([d3.min(this.chartValues), d3.max(this.chartValues)])
+      .domain([this.minValue, this.maxValue])
       .nice();
   }
 
@@ -69,12 +103,26 @@ class CombinationChartStore {
       .padding(0.1);
   }
 
-  get chartValues() {
-    const values = [0];
+  get minValue() {
+    let minValue = 0;
     for (const chart of this.charts.values()) {
-      chart.getValues(this.data).forEach(v => values.push(v));
+      const value = get(chart, 'minValue');
+      if (value < minValue) {
+        minValue = value;
+      }
     }
-    return values;
+    return minValue;
+  }
+  
+  get maxValue() {
+    let maxValue = 0;
+    for (const chart of this.charts.values()) {
+      const value = get(chart, 'maxValue');
+      if (value > maxValue) {
+        maxValue = value;
+      }
+    }
+    return maxValue;
   }
 
   get isVertical() {
@@ -90,15 +138,17 @@ decorate(CombinationChartStore, {
   
   valueScale: computed,
   bandScale: computed,
-  chartValues: computed,
   width: computed,
   height: computed,
   isVertical: computed,
+  minValue: computed,
+  maxValue: computed,
   
   setData: action,
+  setSvg: action,
   addChart: action,
   removeChart: action,
-  setSvg: action,
+  setChartMinMaxValue: action,
   setOrientation: action,
 });
 export default CombinationChartStore;

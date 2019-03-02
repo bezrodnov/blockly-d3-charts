@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
+import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
 import * as d3 from 'd3';
@@ -7,46 +8,65 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-class AreaChart extends Component {
+class AreaChartWrapper extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => {
-          this.store = store;
-          return this.renderTooltip();
-        }}
+        {store => <AreaChart store={store} {...this.props} />}
       </ChartContext.Consumer>
+    );
+  }
+}
+
+AreaChartWrapper.propTypes = {
+  measure: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  formatTooltip: PropTypes.func,
+};
+AreaChartWrapper.defaultProps = {
+  formatTooltip: (dimension, value) =>
+    `${dimension}: ${numeral(value).format('0.[0]a')}`,
+};
+export default AreaChartWrapper;
+
+class AreaChart extends Component {
+  render() {
+    return (
+      <Fragment>
+        {this.renderChart()}
+        {this.renderTooltip()}
+      </Fragment>
     );
   }
 
   componentDidMount() {
-    this.chartId = this.store.addChart({
+    this.chartId = this.props.store.addChart({
       chartType: 'area',
       requiresSpace: false,
-      renderChart: this.renderChart.bind(this),
-      getValues: this.getValues.bind(this),
     });
   }
 
   componentWillUnmount() {
-    this.unmounting = true;
-    if (this.chartId && this.store) {
-      this.store.svg.selectAll(`g.charts .area.${this.chartId}`).remove();
-      this.store.removeChart(this.chartId);
+    if (this.chartId) {
+      this.props.store.svg.selectAll(`g.charts .area.${this.chartId}`).remove();
+      this.props.store.removeChart(this.chartId);
     }
   }
 
-  renderChart(data, size) {
-    if (this.unmounting) {
-      return;
+  renderChart() {
+    const { store } = this.props;
+    const { svg, valueScale, bandScale, isVertical, data } = store;
+    this.syncStore();
+
+    if (!this.chartId) {
+      return null;
     }
 
-    const { svg, valueScale, bandScale, isVertical } = this.store;
-    const chartContainer = svg.select('g.charts');
-    // remove previously rendered chart first
-    //chartContainer.selectAll(`.area.${this.chartId}`).remove();
-    
+    const size = store.getChartSize(this.chartId);
     const offset = size / 2;
+
+    const chartContainer = svg.select('g.charts');
+    
     const area = d3.area()
       .x(d => bandScale(d[0]) + offset)
       .y0(valueScale(0))
@@ -64,10 +84,25 @@ class AreaChart extends Component {
       .duration(500)
       .attr('transform', isVertical ? '' : `scale(1, -1) rotate(-90)`)
       .attr('d', area);
+    
+    return null;
   }
 
-  getValues(data) {
-    return data.map(this.getMeasureValue);
+  syncStore() {
+    let minValue = 0;
+    let maxValue = 0;
+    this.props.store.data.forEach(d => {
+      const value = this.getMeasureValue(d);
+      if (value < minValue) {
+        minValue = value;
+      } else if (value > maxValue) {
+        maxValue = value;
+      }
+    });
+
+    if (this.chartId) {
+      this.props.store.setChartMinMaxValue(this.chartId, minValue, maxValue);
+    }
   }
 
   getMeasureValue(dataEntry) {
@@ -105,22 +140,14 @@ class AreaChart extends Component {
   }
 
   get svgParent() {
-    return this.store.svg.node().parentNode;
+    return this.props.store.svg.node().parentNode;
   }
 }
 
-AreaChart.propTypes = {
-  measure: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-  formatTooltip: PropTypes.func,
-};
-AreaChart.defaultProps = {
-  formatTooltip: (dimension, value) => `${dimension}: ${numeral(value).format('0.[0]a')}`,
-};
+observer(AreaChart);
 applyDecorators(AreaChart, {
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],
 });
 AreaChart.displayName = 'AreaChart';
-export default AreaChart;

@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
+import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
 import * as d3 from 'd3';
@@ -7,41 +8,65 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-class StackedBarChart extends Component {
+class StackedBarChartWrapper extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => {
-          this.store = store;
-          return this.renderTooltip();
-        }}
+        {store => <StackedBarChart store={store} {...this.props} />}
       </ChartContext.Consumer>
+    );
+  }
+}
+
+StackedBarChartWrapper.propTypes = {
+  measures: PropTypes.arrayOf(PropTypes.shape({
+    name: PropTypes.string.isRequired,
+    color: PropTypes.string.isRequired,
+  })).isRequired,
+  formatTooltip: PropTypes.func,
+};
+StackedBarChartWrapper.defaultProps = {
+  formatTooltip: (dimension, value) =>
+    `${dimension}: ${numeral(value).format('0.[0]a')}`,
+};
+export default StackedBarChartWrapper;
+
+class StackedBarChart extends Component {
+  render() {
+    return (
+      <Fragment>
+        {this.renderChart()}
+        {this.renderTooltip()}
+      </Fragment>
     );
   }
 
   componentDidMount() {
-    this.chartId = this.store.addChart({
+    this.chartId = this.props.store.addChart({
       chartType: 'stackedbar',
       requiresSpace: true,
-      renderChart: this.renderChart.bind(this),
-      getValues: this.getValues.bind(this),
     });
   }
 
   componentWillUnmount() {
-    this.unmounting = true;
-    if (this.chartId && this.store) {
-      this.store.svg.selectAll(`g.charts .stackedbar.${this.chartId}`).remove();
-      this.store.removeChart(this.chartId);
+    if (this.chartId && this.props.store) {
+      this.props.store.svg.selectAll(`g.charts .stackedbar.${this.chartId}`).remove();
+      this.props.store.removeChart(this.chartId);
     }
   }
 
-  renderChart(data, size, offset) {
-    if (this.unmounting) {
-      return;
+  renderChart() {
+    const { store } = this.props;
+    const { svg, valueScale, bandScale, isVertical, data } = store;
+    this.syncStore();
+
+    if (!this.chartId) {
+      return null;
     }
 
-    const { svg, valueScale, bandScale, isVertical } = this.store;
+    const size = store.getChartSize(this.chartId);
+    const offset = store.getChartOffset(this.chartId);
+
     const chartContainer = svg.selectAll('g.charts');
     
     const { measures } = this.props;
@@ -94,6 +119,27 @@ class StackedBarChart extends Component {
         .exit()
         .remove();
     });
+
+    return null;
+  }
+
+  syncStore() {
+    let minValue = 0;
+    let maxValue = 0;
+    this.props.store.data.forEach(d => {
+      this.props.measures.forEach((measure, index) => {
+        const value = this.getMeasureValue(d, index);
+        if (value < minValue) {
+          minValue = value;
+        } else if (value > maxValue) {
+          maxValue = value;
+        }
+      });
+    });
+
+    if (this.chartId) {
+      this.props.store.setChartMinMaxValue(this.chartId, minValue, maxValue);
+    }
   }
 
   getValues(data) {
@@ -146,24 +192,12 @@ class StackedBarChart extends Component {
   }
 
   get svgParent() {
-    return this.store.svg.node().parentNode;
+    return this.props.store.svg.node().parentNode;
   }
 }
 
-StackedBarChart.propTypes = {
-  measures: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string.isRequired,
-    color: PropTypes.string.isRequired,
-  })).isRequired,
-  formatTooltip: PropTypes.func,
-};
-StackedBarChart.defaultProps = {
-  formatTooltip: (dimension, value) => `${dimension}: ${numeral(value).format('0.[0]a')}`,
-};
+observer(StackedBarChart);
 applyDecorators(StackedBarChart, {
-  getMeasureValue: [autobind],
-  onMouseMove: [autobind],
   onMouseOut: [autobind],
 });
 StackedBarChart.displayName = 'StackedBarChart';
-export default StackedBarChart;

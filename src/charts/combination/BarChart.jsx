@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
+import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
 import * as d3 from 'd3';
@@ -7,43 +8,62 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-class BarChart extends Component {
+export default class BarChartWrapper extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => {
-          this.store = store;
-          return this.renderTooltip();
-        }}
+        {store => <BarChart store={store} {...this.props} />}
       </ChartContext.Consumer>
+    );
+  }
+}
+
+BarChartWrapper.propTypes = {
+  measure: PropTypes.string.isRequired,
+  color: PropTypes.string.isRequired,
+  formatTooltip: PropTypes.func,
+};
+BarChartWrapper.defaultProps = {
+  formatTooltip: (dimension, value) => 
+    `${dimension}: ${numeral(value).format('0.[0]a')}`,
+};
+
+class BarChart extends Component {
+  render() {
+    return (
+      <Fragment>
+        {this.renderChart()}
+        {this.renderTooltip()}
+      </Fragment>
     );
   }
 
   componentDidMount() {
-    if (this.store) {
-      this.chartId = this.store.addChart({
-        chartType: 'bar',
-        requiresSpace: true,
-        renderChart: this.renderChart.bind(this),
-        getValues: this.getValues.bind(this),
-      });
-    }
+    this.chartId = this.props.store.addChart({
+      chartType: 'bar',
+      requiresSpace: true,
+    });
   }
 
   componentWillUnmount() {
-    this.unmounting = true;
-    if (this.chartId && this.store) {
-      this.store.svg.selectAll(`g.charts .bar.${this.chartId}`).remove();
-      this.store.removeChart(this.chartId);
+    if (this.chartId && this.props.store) {
+      this.props.store.svg.selectAll(`g.charts .bar.${this.chartId}`).remove();
+      this.props.store.removeChart(this.chartId);
     }
   }
 
-  renderChart(data, size, offset) {
-    if (this.unmounting) {
-      return;
+  renderChart() {
+    const { store } = this.props;
+    const { svg, valueScale, bandScale, isVertical, data } = store;
+    this.syncStore();
+
+    if (!this.chartId) {
+      return null;
     }
 
-    const { svg, valueScale, bandScale, isVertical } = this.store;
+    const size = store.getChartSize(this.chartId);
+    const offset = store.getChartOffset(this.chartId);
+
     const chartContainer = svg.selectAll('g.charts');
     
     const getStartX = d => isVertical
@@ -91,10 +111,25 @@ class BarChart extends Component {
     chartContainer.selectAll(`.bar.${this.chartId}`)
       .exit()
       .remove();
+    
+    return null;
   }
 
-  getValues(data) {
-    return data.map(this.getMeasureValue);
+  syncStore() {
+    let minValue = 0;
+    let maxValue = 0;
+    this.props.store.data.forEach(d => {
+      const value = this.getMeasureValue(d);
+      if (value < minValue) {
+        minValue = value;
+      } else if (value > maxValue) {
+        maxValue = value;
+      }
+    });
+
+    if (this.chartId) {
+      this.props.store.setChartMinMaxValue(this.chartId, minValue, maxValue);
+    }
   }
 
   getMeasureValue(dataEntry) {
@@ -132,22 +167,14 @@ class BarChart extends Component {
   }
 
   get svgParent() {
-    return this.store.svg.node().parentNode;
+    return this.props.store.svg.node().parentNode;
   }
 }
 
-BarChart.propTypes = {
-  measure: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-  formatTooltip: PropTypes.func,
-};
-BarChart.defaultProps = {
-  formatTooltip: (dimension, value) => `${dimension}: ${numeral(value).format('0.[0]a')}`,
-};
+observer(BarChart);
 applyDecorators(BarChart, {
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],
 });
 BarChart.displayName = 'BarChart';
-export default BarChart;

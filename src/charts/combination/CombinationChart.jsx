@@ -20,42 +20,13 @@ class CombinationChart extends Component {
         <svg ref={this.svgRef}>
           <ChartContext.Provider value={store}>
             {children}
-            {this.renderCharts()}
           </ChartContext.Provider>
         </svg>
       </div>
     );
   }
 
-  renderCharts() {
-    const { bandScale, charts, data } = this.props.store;
-    const bandWidth = bandScale.bandwidth();
-    
-    // render chart which don't require additional space first
-    let chartsRequiringSpace = 0;
-    charts.forEach(chart => {
-      if (chart.requiresSpace) {
-        chartsRequiringSpace++;
-      }
-    });
-
-    // render charts which require additional space
-    let offset = 0;
-    const size = bandWidth / chartsRequiringSpace;
-    charts.forEach(chart => {
-      if (chart.requiresSpace) {
-        chart.renderChart(data, size, offset);
-        offset += size;
-      } else {
-        chart.renderChart(data, bandWidth);
-      }
-    });
-  }
-
   componentDidMount() {
-    // remove existing charts (if any)
-    d3.select(this.svgRef.current).selectAll('g.charts').remove();
-
     const { store } = this.props;
     if (!store.svg) {
       const rect = this.svgRef.current.parentNode.getBoundingClientRect();
@@ -80,7 +51,19 @@ class CombinationChart extends Component {
   }
 
   get chartStyle() {
-    return Object.assign(DEFAULT_CHART_STYLE, this.props.chartStyle);
+    const { margin } = this.props.chartStyle || {};
+    const getMarginValue = t => margin && margin[t]
+      ? margin[t]
+      : DEFAULT_CHART_STYLE.margin[t];
+
+    return {
+      margin: {
+        top: getMarginValue('top'),
+        bottom: getMarginValue('bottom'),
+        left: getMarginValue('left'),
+        right: getMarginValue('right'),
+      },
+    };
   }
 
   get style() {
