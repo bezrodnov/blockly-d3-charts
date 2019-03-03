@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { observable } from 'mobx';
+import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
@@ -41,9 +41,11 @@ class AreaChart extends Component {
   }
 
   componentDidMount() {
-    this.chartId = this.props.store.addChart({
-      chartType: 'area',
-      requiresSpace: false,
+    runInAction(() => {
+      this.chartId = this.props.store.addChart({
+        chartType: 'area',
+        requiresSpace: false,
+      });
     });
   }
 

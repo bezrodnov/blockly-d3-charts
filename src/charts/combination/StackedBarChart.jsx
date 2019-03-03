@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import { observable } from 'mobx';
+import { observable, runInAction } from 'mobx';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
@@ -43,9 +43,11 @@ class StackedBarChart extends Component {
   }
 
   componentDidMount() {
-    this.chartId = this.props.store.addChart({
-      chartType: 'stackedbar',
-      requiresSpace: true,
+    runInAction(() => {
+      this.chartId = this.props.store.addChart({
+        chartType: 'stackedbar',
+        requiresSpace: true,
+      });
     });
   }
 

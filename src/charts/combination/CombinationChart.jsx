@@ -5,8 +5,41 @@ import * as d3 from 'd3';
 
 import ChartContext from './ChartContext';
 import CombinationChartStore from './CombinationChartStore';
+import BarChart from './BarChart';
+import StackedBarChart from './StackedBarChart';
+import AreaChart from './AreaChart';
+import ValueAxis from './ValueAxis';
+import BandAxis from './BandAxis';
 
 class CombinationChart extends Component {
+  static get Store() {
+    return CombinationChartStore;
+  }
+  
+  static get AreaChart() {
+    return AreaChart;
+  }
+
+  static get BarChart() {
+    return BarChart;
+  }
+
+  static get StackedBarChart() {
+    return StackedBarChart;
+  }
+
+  static get ValueAxis() {
+    return ValueAxis;
+  }
+
+  static get BandAxis() {
+    return BandAxis;
+  }
+
+  static get ChartContext() {
+    return ChartContext;
+  }
+
   constructor() {
     super(...arguments);
 
