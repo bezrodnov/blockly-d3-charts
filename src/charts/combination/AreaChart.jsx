@@ -80,6 +80,8 @@ class AreaChart extends Component {
 
     chartContainer.select(`path.area.${this.chartId}`)
       .attr('fill-opacity', 0.7)
+      .on('mousemove', this.onMouseMove)
+      .on('mouseout', this.onMouseOut)
       .transition()
       .duration(500)
       .attr('fill', this.props.color)
@@ -130,14 +132,39 @@ class AreaChart extends Component {
   }
 
   onMouseMove(data) {
-    // this.setState({
-    //   focusedDataItem: data,
-    //   mouseXY: d3.mouse(this.svgParent),
-    // });
+    const { bandScale, isVertical } = this.props.store;
+    const [x, y] = d3.mouse(this.svgParent);
+    const size = this.props.store.getChartSize(this.chartId);
+
+    const focusedDataItem = data.reduce((prev, curr) => {
+      const currCoord = bandScale(curr[0]);
+      const prevCoord = bandScale(prev[0]);
+
+      if (isVertical) {
+        const d = x - this.marginLeft - size / 2;
+        return Math.abs(currCoord - d) <= Math.abs(prevCoord - d) ? curr : prev;
+      } else {
+        const d = y - this.marginTop - size / 2;
+        return Math.abs(currCoord - d) <= Math.abs(prevCoord - d) ? curr : prev;
+      }
+    }, data[0]);
+
+    this.setState({
+      focusedDataItem,
+      mouseXY: [x, y],
+    });
   }
 
   onMouseOut() {
     this.setState({ focusedDataItem: null });
+  }
+
+  get marginLeft() {
+    return Number(this.props.store.svg.select('g.charts').attr('margin-left'));
+  }
+  
+  get marginTop() {
+    return Number(this.props.store.svg.select('g.charts').attr('margin-top'));
   }
 
   get svgParent() {
