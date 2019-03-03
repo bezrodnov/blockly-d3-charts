@@ -67,9 +67,12 @@ class CombinationChartStore {
     }
     const size = this.getChartSize(chartId);
     let offset = 0;
+    
     for (const id of this.charts.keys()) {
       if (id !== chartId) {
-        offset += size;
+        if (this.charts.get(id).requiresSpace) {
+          offset += size;
+        }
       } else {
         break;
       }
