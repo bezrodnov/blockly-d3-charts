@@ -4,11 +4,20 @@ let chartId = 1;
 
 Blockly.Blocks['combination_chart'] = {
   init: function() {
+    this.chartId = chartId++;
+
     this.appendDummyInput()
       .appendField('Combination Chart');
+      
+    this.appendDummyInput()
+      .appendField('orientation:')
+      .appendField(new Blockly.FieldDropdown([
+        ['vertical', 'vertical'],
+        ['horizontal', 'horizontal'],
+      ]), 'ORIENTATION');
+
+    this.setInputsInline(true);
     this.setNextStatement(true, 'combination_chart_element');
-    
-    this.chartId = chartId++;
     this.setOutput(false);
     this.setColour(160);
     this.setTooltip('Charts container');
@@ -16,7 +25,9 @@ Blockly.Blocks['combination_chart'] = {
 };
 
 Blockly.JavaScript['combination_chart'] = block => {
-  const output = `CombinationChartManager.getChartBuilder('${block.chartId}')`;
+  const orientation = block.getFieldValue('ORIENTATION');
+  const output = `CombinationChartManager.getChartBuilder('${block.chartId}')
+    .setOrientation('${orientation}')`;
   return Blockly.JavaScript.joinCombinationChartElements(block, output);
 };
 

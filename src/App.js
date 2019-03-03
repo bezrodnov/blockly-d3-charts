@@ -105,6 +105,7 @@ class App extends Component {
     for (const [chartId, chart] of entries(CombinationChartManager.charts)) {
       if (chart.axises.length > 0 || chart.charts.length > 0) {
         chart.store.setData(data);
+        chart.store.setOrientation(chart.orientation);
         charts.push((
           <CombinationChart
             key={chartId}

@@ -21,7 +21,7 @@ Blockly.Blocks['bar_chart'] = {
     
     this.setInputsInline(true);
     this.setOutput(false);
-    this.setColour(160);
+    this.setColour(360);
     this.setTooltip('Renders bar chart');
   },
 };

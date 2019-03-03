@@ -50,6 +50,11 @@ class ChartBuilder {
     return this;
   }
 
+  setOrientation(orientation) {
+    this.chart.orientation = orientation;
+    return this;
+  }
+
   build() {
     this.onFinish(this.chart);
   }
