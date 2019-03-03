@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
@@ -173,6 +174,7 @@ class BarChart extends Component {
 
 observer(BarChart);
 applyDecorators(BarChart, {
+  chartId: [observable],
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],

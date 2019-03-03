@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
@@ -49,9 +50,10 @@ class StackedBarChart extends Component {
   }
 
   componentWillUnmount() {
-    if (this.chartId && this.props.store) {
-      this.props.store.svg.selectAll(`g.charts .stackedbar.${this.chartId}`).remove();
-      this.props.store.removeChart(this.chartId);
+    const { store } = this.props;
+    if (this.chartId && store) {
+      store.svg.selectAll(`g.charts rect.stackedbar.${this.chartId}`).remove();
+      store.removeChart(this.chartId);
     }
   }
 
@@ -87,17 +89,17 @@ class StackedBarChart extends Component {
         ? valueScale(Math.max(this.getMeasureValue(d, index), 0))
         : getStartY(d);
 
-      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}.measure-${index}`)
         .data(data)
         .enter().append('rect')
-        .attr('class', `stackedbar ${this.chartId}-${index}`)
+        .attr('class', `stackedbar ${this.chartId} measure-${index}`)
         .attr('x', getStartX)
         .attr('y', getStartY)
         .attr('width', isVertical ? size : 0)
         .attr('height', isVertical ? 0 : size)
         .attr('fill', color);
       
-      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}.measure-${index}`)
         .attr('measure-value', d => this.getMeasureValue(d, index))
         .on('mousemove', d => this.onMouseMove(d, name))
         .on('mouseout', this.onMouseOut)
@@ -115,7 +117,7 @@ class StackedBarChart extends Component {
           : Math.abs(valueScale(0) - valueScale(this.getMeasureValue(d, index)))
         );
       
-      chartContainer.selectAll(`.stackedbar.${this.chartId}-${index}`)
+      chartContainer.selectAll(`.stackedbar.${this.chartId}.measure-${index}`)
         .exit()
         .remove();
     });
@@ -198,6 +200,7 @@ class StackedBarChart extends Component {
 
 observer(StackedBarChart);
 applyDecorators(StackedBarChart, {
+  chartId: [observable],
   onMouseOut: [autobind],
 });
 StackedBarChart.displayName = 'StackedBarChart';

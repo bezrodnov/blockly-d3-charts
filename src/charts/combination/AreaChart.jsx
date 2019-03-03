@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import { observable } from 'mobx';
 import { observer } from 'mobx-react';
 import PropTypes from 'prop-types';
 import { autobind, applyDecorators } from 'core-decorators';
@@ -75,13 +76,13 @@ class AreaChart extends Component {
     chartContainer
       .datum(data)
       .append('path')
-      .attr('class', `area ${this.chartId}`)
-      .attr('fill', this.props.color)
-      .attr('fill-opacity', 0.7);
+      .attr('class', `area ${this.chartId}`);
 
     chartContainer.select(`path.area.${this.chartId}`)
+      .attr('fill-opacity', 0.7)
       .transition()
       .duration(500)
+      .attr('fill', this.props.color)
       .attr('transform', isVertical ? '' : `scale(1, -1) rotate(-90)`)
       .attr('d', area);
     
@@ -146,6 +147,7 @@ class AreaChart extends Component {
 
 observer(AreaChart);
 applyDecorators(AreaChart, {
+  chartId: [observable],
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],

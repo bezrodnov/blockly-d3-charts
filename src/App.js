@@ -1,15 +1,22 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
+import { observable, entries } from 'mobx';
 
 import CombinationChart from './charts/combination/CombinationChart';
-import CombinationChartStore from './charts/combination/CombinationChartStore';
 import AreaChart from './charts/combination/AreaChart';
 import BarChart from './charts/combination/BarChart';
 import BandAxis from './charts/combination/BandAxis';
 import ValueAxis from './charts/combination/ValueAxis';
 import StackedBarChart from './charts/combination/StackedBarChart';
 
-const store = new CombinationChartStore({ data: [] });
+import './blocks/Blocks';
+import CombinationChartManager
+  from './charts/combination/CombinationChartManager';
+
+const { Blockly } = window;
+const data = observable([]);
+
+const MEASURES = ['actual', 'previous', 'projected'];
 
 const resetData = () => {
   const persons = ['Bob', 'Robin', 'Anne', 'Mark', 'Joe', 'Eve', 'Karen',
@@ -19,87 +26,113 @@ const resetData = () => {
     ? Math.round(Math.random() * 100 + 30)
     : undefined;
 
-  store.setData(persons.map(person => {
-    const actual = rndVal();
-    const projected = rndVal();
-    const previous = rndVal();
-    return [person, { actual, projected, previous }];
-  }));
+  data.length = 0;
+  persons.forEach(person => {
+    const measures = MEASURES.reduce((measureValues, measure) => {
+      measureValues[measure] = rndVal();
+      return measureValues;
+    }, {});
+    
+    data.push([person, measures]);
+  });
 };
 
 resetData();
 
 class App extends Component {
-  constructor() {
-    super(...arguments);
+  componentDidMount() {
+    this.workspace = Blockly.inject('blocklyDiv', {
+      toolbox: document.getElementById('toolbox'),
+    });
 
-    this.state = {
-      axisXPosition: 'bottom',
-      axisYPosition: 'left',
-    };
+    this.workspace.getMeasureDropdown = () =>
+      new Blockly.FieldDropdown(() => MEASURES.map(m => [m, m]));
 
-    this.onAxisXPositionChange = this.onAxisXPositionChange.bind(this);
-    this.onAxisYPositionChange = this.onAxisYPositionChange.bind(this);
+    this.workspace.addChangeListener(e => {
+      const code = Blockly.JavaScript.workspaceToCode(this.workspace);
+      try {
+        eval(code);
+      } catch (err) {
+        console.error(err);
+      }
+    });
   }
 
   render() {
-    const { axisXPosition, axisYPosition } = this.state;
-    const { orientation } = store;
     return (
       <div style={containerStyle}>
-        <div style={this.controlsStyle}>
-          <span>X Axis Position </span>
-          <select value={axisXPosition} onChange={this.onAxisXPositionChange}>
-            <option value="top">Top</option>
-            <option value="zero">Zero</option>
-            <option value="bottom">Bottom</option>
-          </select>
-          <span style={{ marginLeft: 20 }}>Y Axis Position </span>
-          <select value={axisYPosition} onChange={this.onAxisYPositionChange}>
-            <option value="left">Left</option>
-            <option value="zero">Zero</option>
-            <option value="right">Right</option>
-          </select>
-          <button onClick={resetData} style={{ marginLeft: 20 }}>Reset data</button>
-          <button onClick={toggleOrientation} style={{ marginLeft: 20 }}>Toggle Orientation</button>
-        </div>
-        <div style={chartContainerStyle}>
-          <CombinationChart style={this.getChartStyle()} store={store} orientation={orientation}>
-            <BandAxis verticalPosition={axisXPosition} horizontalPosition={axisYPosition} />
-            <ValueAxis verticalPosition={axisXPosition} horizontalPosition={axisYPosition} />
-            
-            <BarChart measure="previous" color="#55C" />
-            <StackedBarChart measures={[
-              {name: 'actual', color: '#5C5'}, {name: 'projected', color: '#C55'},
-            ]}/>
-            <AreaChart measure="actual" color="#73F" /> */}
-          </CombinationChart>
+        <div id="blocklyDiv" style={{ height: 400 }}/>
+        <div style={{ flex: 1 }}>
+          <div style={this.controlsStyle}>
+            <button onClick={resetData} style={{ marginLeft: 20 }}>
+              Reset data
+            </button>
+          </div>
+          <div style={chartContainerStyle}>
+            {this.renderCharts()}
+          </div>
         </div>
       </div>
     );
   }
 
-  onAxisXPositionChange({ target: select }) {
-    this.setState({ axisXPosition: select.value });
-  }
+  renderCharts() {
+    const charts = [];
 
-  onAxisYPositionChange({ target: select }) {
-    this.setState({ axisYPosition: select.value });
-  }
-
-  getChartStyle() {
-    const { orientation } = this.state;
-    return {
-      width: orientation === 'horizontal' ? 400 : 700,
-      paddingRight: orientation === 'horizontal' ? 300 : 0,
-      height: orientation === 'horizontal' ? 700 : 400,
-      marginRight: 50,
+    const buildChartFromConfig = ({ type, config }, index) => {
+      switch (type) {
+        case 'bar':
+          return <BarChart
+            key={`chart-${index}`}
+            measure={config.measure}
+            color={config.color}
+          />;
+        case 'area':
+          return <AreaChart
+            key={`chart-${index}`}
+            measure={config.measure}
+            color={config.color}
+          />;
+        case 'stackedbar':
+          return <StackedBarChart
+            key={`chart-${index}`}
+            measures={config.measures}
+          />;
+      }
+      return null;
     };
+
+    for (const [chartId, chart] of entries(CombinationChartManager.charts)) {
+      if (chart.axises.length > 0 || chart.charts.length > 0) {
+        chart.store.setData(data);
+        charts.push((
+          <CombinationChart
+            key={chartId}
+            store={chart.store}
+            style={this.chartStyle}
+          >
+            {chart.axises.map((axis, index) => axis.type === 'value'
+              ? <ValueAxis key={`axis-${index}`} />
+              : <BandAxis  key={`axis-${index}`} />
+            )} 
+            {chart.charts.map(buildChartFromConfig)}
+          </CombinationChart>
+        ));
+      }
+    }
+    return charts;
   }
 
   get controlsStyle() {
     return {
       padding: 20,
+    };
+  }
+
+  get chartStyle() {
+    return {
+      width: 600,
+      height: 400,
     };
   }
 }
@@ -109,16 +142,13 @@ export default App;
 
 const containerStyle = {
   width: '100%',
-  height: '100%',
   background: '#EEE',
   color: '#333',
+  display: 'flex',
+  flexDirection: 'column',
 };
 
 const chartContainerStyle = {
   display: 'inline-block',
   verticalAlign: 'top',
-};
-
-const toggleOrientation = () => {
-  store.setOrientation(store.orientation === 'horizontal' ? 'vertical' : 'horizontal');
 };

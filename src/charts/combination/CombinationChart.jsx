@@ -28,26 +28,25 @@ class CombinationChart extends Component {
 
   componentDidMount() {
     const { store } = this.props;
-    if (!store.svg) {
-      const rect = this.svgRef.current.parentNode.getBoundingClientRect();
-      const margin = this.chartStyle.margin;
-      const width = rect.width - margin.left - margin.right;
-      const height = rect.height - margin.top - margin.bottom;
-      const svg = d3.select(this.svgRef.current)
-        .attr('width', rect.width)
-        .attr('height', rect.height)
-        .attr('inner-width', width)
-        .attr('inner-height', height);
-      
-      svg.insert('g', 'g')
-        .attr('class', 'charts')
-        .attr('margin-left', margin.left)
-        .attr('margin-right', margin.right)
-        .attr('margin-top', margin.top)
-        .attr('margin-bottom', margin.bottom)
-        .attr('transform', `translate(${margin.left},${margin.top})`);
-      store.setSvg(svg);
-    }
+    
+    const rect = this.svgRef.current.parentNode.getBoundingClientRect();
+    const margin = this.chartStyle.margin;
+    const width = rect.width - margin.left - margin.right;
+    const height = rect.height - margin.top - margin.bottom;
+    const svg = d3.select(this.svgRef.current)
+      .attr('width', rect.width)
+      .attr('height', rect.height)
+      .attr('inner-width', width)
+      .attr('inner-height', height);
+    
+    svg.insert('g', 'g')
+      .attr('class', 'charts')
+      .attr('margin-left', margin.left)
+      .attr('margin-right', margin.right)
+      .attr('margin-top', margin.top)
+      .attr('margin-bottom', margin.bottom)
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+    store.setSvg(svg);
   }
 
   get chartStyle() {
