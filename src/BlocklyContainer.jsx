@@ -79,7 +79,7 @@ export default BlocklyContainer;
 const addDemoBlocks = (workspace, measures, orientation, dx, dy) => {
   const chart = workspace.newBlock('combination_chart');
   chart.setFieldValue(orientation, 'ORIENTATION');
-  chart.setFieldValue(0.7, 'BAND_SCALE_PADDING');
+  chart.setFieldValue(0.5, 'BAND_SCALE_PADDING');
   chart.moveBy(dx, dy);
   chart.initSvg();
   chart.render();
