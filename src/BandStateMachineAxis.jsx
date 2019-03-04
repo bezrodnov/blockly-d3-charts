@@ -29,6 +29,7 @@ BandStateMachineAxis.defaultProps = {
   labelColor: '#33F',
   tickColor: '#33F',
   axisColor: '#33F',
+  transitionColor: '#C9C9D3',
 };
 
 BandStateMachineAxis.displayName = 'BandStateMachineAxis';
@@ -36,8 +37,8 @@ export default BandStateMachineAxis;
 
 class Axis extends Component {
   render() {
-    const { labelColor, tickColor, axisColor, store } = this.props;
-    const { svg, isVertical, bandScale, data } = store;
+    const { labelColor, tickColor, axisColor, transitionColor } = this.props;
+    const { svg, isVertical, bandScale, data } = this.props.store;
     if (!svg) {
       return null;
     }
@@ -85,7 +86,7 @@ class Axis extends Component {
         .attr('y', isCircle ? 0 : -5)
         .attr('width', 10)
         .attr('height', 10)
-        .attr('stroke', '#C9C9D3')
+        .attr('stroke', transitionColor)
         .attr('stroke-width', 2);
       
       if (i < data.length - 1) {
@@ -94,16 +95,23 @@ class Axis extends Component {
         const r2 = nextTick.firstChild.getBoundingClientRect();
         
         selection.append('line')
-          .attr('x1', isVertical ? 15 : 5)
-          .attr('y1', isVertical ? 0 : -15)
-          .attr('x2', isVertical ? r2.left - r1.left - 15 : 5)
-          .attr('y2', isVertical ? 0 : r2.top - r1.top + 15)
-          .attr('stroke', '#C9C9D3')
-          .attr('stroke-width', 2);
+          .attr('x2', isVertical ? 25 : 5)
+          .attr('y2', isVertical ? 0 : -25)
+          .attr('x1', isVertical ? r2.left - r1.left - 15 : 5)
+          .attr('y1', isVertical ? 0 : r2.top - r1.top + 15)
+          .attr('stroke', transitionColor)
+          .attr('stroke-width', 1)
+          .attr('marker-end', 'url(#state-machine-axis-arrow)');
       }
     });
     
-    return null;
+    return (
+      <defs>
+        <marker id="state-machine-axis-arrow" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill={transitionColor} />
+        </marker>
+      </defs>
+    );
   }
 
   get marginLeft() {
