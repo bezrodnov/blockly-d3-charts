@@ -8,6 +8,24 @@ Blockly.Blocks['band_axis'] = {
     this.appendDummyInput()
       .appendField('Band Axis');
     
+    this.appendDummyInput()
+      .appendField('horizontal position:')
+      .appendField(new Blockly.FieldDropdown([
+        ['left', 'left'],
+        ['right', 'right'],
+        ['zero', 'zero'],
+      ]), 'H_POS');
+      
+    this.appendDummyInput()
+      .appendField('vertical position:')
+      .appendField(new Blockly.FieldDropdown([
+        ['bottom', 'bottom'],
+        ['top', 'top'],
+        ['zero', 'zero'],
+      ]), 'V_POS');
+
+    this.setInputsInline(true);
+
     this.setOutput(false);
     this.setColour(230);
     this.setTooltip('Band Axis');
@@ -15,9 +33,8 @@ Blockly.Blocks['band_axis'] = {
 };
 
 Blockly.JavaScript['band_axis'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-  const output = `\n  .addBandAxis()`;
+  const hPos = block.getFieldValue('H_POS');
+  const vPos = block.getFieldValue('V_POS');
+  const output = `\n  .addBandAxis({ hPos: '${hPos}', vPos: '${vPos}' })`;
   return Blockly.JavaScript.joinCombinationChartElements(block, output);
 };

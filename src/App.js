@@ -23,7 +23,7 @@ const resetData = () => {
     'Kirsty', 'Chris', 'Lisa', 'Tom', 'Stacy', 'Charles', 'Mary'];
   
   const rndVal = () => Math.random() > 0.05
-    ? Math.round(Math.random() * 100 + 30)
+    ? Math.round(Math.random() * 125 - 25)
     : undefined;
 
   data.length = 0;
@@ -112,10 +112,16 @@ class App extends Component {
             store={chart.store}
             style={this.chartStyle}
           >
-            {chart.axises.map((axis, index) => axis.type === 'value'
-              ? <ValueAxis key={`axis-${index}`} />
-              : <BandAxis  key={`axis-${index}`} />
-            )} 
+            {chart.axises.map((axis, index) => {
+              const cfg = {
+                key: `axis-${index}`,
+                horizontalPosition: axis.hPos,
+                verticalPosition: axis.vPos,
+              };
+              return axis.type === 'value'
+                ? <ValueAxis {...cfg} />
+                : <BandAxis {...cfg} />;
+            })}
             {chart.charts.map(buildChartFromConfig)}
           </CombinationChart>
         ));

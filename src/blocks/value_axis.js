@@ -8,6 +8,21 @@ Blockly.Blocks['value_axis'] = {
     this.appendDummyInput()
       .appendField('Value Axis');
     
+    this.appendDummyInput()
+      .appendField('horizontal position:')
+      .appendField(new Blockly.FieldDropdown([
+        ['left', 'left'],
+        ['right', 'right'],
+      ]), 'H_POS');
+      
+    this.appendDummyInput()
+      .appendField('vertical position:')
+      .appendField(new Blockly.FieldDropdown([
+        ['bottom', 'bottom'],
+        ['top', 'top'],
+      ]), 'V_POS');
+
+    this.setInputsInline(true);
     this.setOutput(false);
     this.setColour(230);
     this.setTooltip('Value Axis');
@@ -15,9 +30,8 @@ Blockly.Blocks['value_axis'] = {
 };
 
 Blockly.JavaScript['value_axis'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-  const output = `\n  .addValueAxis()`;
+  const hPos = block.getFieldValue('H_POS');
+  const vPos = block.getFieldValue('V_POS');
+  const output = `\n  .addValueAxis({ hPos: '${hPos}', vPos: '${vPos}' })`;
   return Blockly.JavaScript.joinCombinationChartElements(block, output);
 };

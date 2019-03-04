@@ -16,8 +16,8 @@ class BandAxis extends Component {
 }
 
 BandAxis.propTypes = {
-  verticalPosition: PropTypes.oneOf(['top', 'bottom']),
-  horizontalPosition: PropTypes.oneOf(['left', 'right']),
+  verticalPosition: PropTypes.oneOf(['top', 'bottom', 'zero']),
+  horizontalPosition: PropTypes.oneOf(['left', 'right', 'zero']),
   labelColor: PropTypes.string,
   tickColor: PropTypes.string,
   axisColor: PropTypes.string,
@@ -83,11 +83,17 @@ class Axis extends Component {
 
   get offsetTop() {
     const { verticalPosition, store } = this.props;
+    if (verticalPosition === 'zero') {
+      return this.marginTop + store.valueScale(0);
+    }
     return this.marginTop + (verticalPosition === 'bottom' ? store.height : 0);
   }
 
   get offsetLeft() {
     const { horizontalPosition, store } = this.props;
+    if (horizontalPosition === 'zero') {
+      return this.marginLeft + store.valueScale(0);
+    }
     return this.marginLeft + (horizontalPosition === 'right' ? store.width : 0);
   }
 
@@ -96,7 +102,7 @@ class Axis extends Component {
     if (isVertical) {
       return this.props.verticalPosition === 'top' ? d3.axisTop : d3.axisBottom;
     }
-    return this.props.horizontalPosition === 'left' ? d3.axisLeft : d3.axisRight;
+    return this.props.horizontalPosition === 'right' ? d3.axisRight : d3.axisLeft;
   }
 
   componentWillUnmount() {
