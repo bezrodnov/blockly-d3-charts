@@ -104,10 +104,10 @@ class Axis extends Component {
         const r2 = nextTick.firstChild.getBoundingClientRect();
         
         selection.append('line')
-          .attr('x2', isVertical ? 25 : 5)
-          .attr('y2', isVertical ? 0 : -25)
+          .attr('x2', isVertical ? 17 : 5)
+          .attr('y2', isVertical ? 0 : -17)
           .attr('x1', isVertical ? r2.left - r1.left - 15 : 5)
-          .attr('y1', isVertical ? 0 : r2.top - r1.top + 15)
+          .attr('y1', isVertical ? 0 : r2.top - r1.top + 8)
           .attr('stroke', transitionColor)
           .attr('stroke-width', 1)
           .attr('marker-end', 'url(#state-machine-axis-arrow)');

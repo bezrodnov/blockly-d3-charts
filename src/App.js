@@ -65,8 +65,8 @@ class App extends Component {
 
   get chartStyle() {
     return {
-      width: 800,
-      height: 600,
+      width: 700,
+      height: 450,
       display: 'inline-block',
     };
   }
@@ -140,7 +140,7 @@ const resetData = () => {
     'Arrived', 'Delivery Ready', 'Delivered'].reverse();
   
   const rndVal = () => Math.random() > 0.05
-    ? Math.round(Math.random() * 100)
+    ? Math.round(Math.random() * 33)
     : undefined;
 
   data.length = 0;
