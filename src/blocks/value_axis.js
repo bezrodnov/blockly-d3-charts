@@ -43,7 +43,8 @@ Blockly.JavaScript['value_axis'] = block => {
   const tickColor = block.getFieldValue('TICK_COLOR');
   const axisColor = block.getFieldValue('AXIS_COLOR');
   const labelColor = block.getFieldValue('LABEL_COLOR');
-  const output = `\n  .addValueAxis({
+  const output = `\n  .addAxis({
+    type:'value',
     horizontalPosition:'${hPos}',
     verticalPosition:'${vPos}',
     tickColor:'${tickColor}',

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { observer } from 'mobx-react';
 import { observable, entries } from 'mobx';
-import { applyDecorators, autobind } from 'core-decorators';
 
 import CombinationChart from './charts/combination/CombinationChart';
 import AreaChart from './charts/combination/AreaChart';
@@ -10,61 +9,17 @@ import BandAxis from './charts/combination/BandAxis';
 import ValueAxis from './charts/combination/ValueAxis';
 import StackedBarChart from './charts/combination/StackedBarChart';
 
-import './blocks/Blocks';
+import BandStateMachineAxis from './BandStateMachineAxis';
+
 import CombinationChartManager
   from './charts/combination/CombinationChartManager';
-
-const { Blockly } = window;
-Blockly.FieldColour.COLOURS.push('rgba(0,0,0,0)');
+import BlocklyContainer from './BlocklyContainer';
 
 class App extends Component {
-  constructor() {
-    super(...arguments);
-
-    this.state = { collapsed: false };
-  }
-
-  componentDidMount() {
-    this.workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox'),
-      trashcan: true,
-      scrollbars: true,
-    });
-
-    this.workspace.getMeasureDropdown = () =>
-      new Blockly.FieldDropdown(() => MEASURES.map(m => [m, m]));
-
-    this.workspace.addChangeListener(e => {
-      const code = Blockly.JavaScript.workspaceToCode(this.workspace);
-      try {
-        eval(code);
-      } catch (err) {
-        console.log(code);
-        console.error(err);
-      }
-    });
-
-    addDemoBlocks(this.workspace);
-
-    if (window.localStorage && window.localStorage.getItem('react-charts-default-collapsed') !== 'false') {
-      setTimeout(() => {
-        this.setState({ collapsed: true });
-      }, 1000);
-    }
-  }
-
   render() {
-    const collapser = <div
-      style={this.collapserStyle}
-      onClick={this.onCollapserClick}
-      role="button"
-      tabIndex="-1"
-      title="Click to collapse/expand"
-    />;
     return (
       <div style={containerStyle}>
-        <div id="blocklyDiv" style={this.blocklyWorkspaceStyle}/>
-        {collapser}
+        <BlocklyContainer measures={MEASURES} />
         <div style={{ flex: 1 }}>
           <div style={this.controlsStyle}>
             <button onClick={resetData} style={{ marginLeft: 20 }}>
@@ -93,29 +48,13 @@ class App extends Component {
             style={this.chartStyle}
             chartStyle={this.chartChartStyle}
           >
-            {chart.axises.map((axis, index) => {
-              const cfg = { key: `axis-${index}`, ...axis };
-              return axis.type === 'value'
-                ? <ValueAxis {...cfg} />
-                : <BandAxis {...cfg} />;
-            })}
+            {chart.axises.map(buildAxisFromConfig)}
             {chart.charts.map(buildChartFromConfig)}
           </CombinationChart>
         ));
       }
     }
     return charts;
-  }
-
-  onCollapserClick() {
-    if (window.localStorage) {
-      window.localStorage.setItem('react-charts-default-collapsed', !this.isCollapsed);
-    }
-    this.setState({ collapsed: !this.isCollapsed });
-  }
-
-  get isCollapsed() {
-    return this.state && this.state.collapsed;
   }
 
   get controlsStyle() {
@@ -128,6 +67,7 @@ class App extends Component {
     return {
       width: 800,
       height: 600,
+      display: 'inline-block',
     };
   }
 
@@ -139,30 +79,9 @@ class App extends Component {
       },
     };
   }
-
-  get blocklyWorkspaceStyle() {
-    const height = this.isCollapsed ? 0 : 400;
-    return {
-      height,
-      transition: 'height 0.3s ease-in',
-    };
-  }
-
-  get collapserStyle() {
-    return {
-      height: 15,
-      background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%,rgba(0,0,0,0) 50%,rgba(0,0,0,0.65) 100%)',
-      borderRadius: 5,
-      cursor: 'pointer',
-      outline: 'none',
-    };
-  }
 }
 
 observer(App);
-applyDecorators(App, {
-  onCollapserClick: [autobind],
-});
 export default App;
 
 const containerStyle = {
@@ -175,6 +94,19 @@ const containerStyle = {
 const chartContainerStyle = {
   display: 'inline-block',
   verticalAlign: 'top',
+};
+
+const buildAxisFromConfig = (axis, index) => {
+  const cfg = { key: `axis-${index}`, ...axis };
+  switch (axis.type) {
+    case 'value':
+      return <ValueAxis {...cfg} />;
+    case 'band':
+      return <BandAxis {...cfg} />;
+    case 'band_state_machine':
+      return <BandStateMachineAxis {...cfg} />;
+  }
+  return null;
 };
 
 const buildChartFromConfig = ({ type, config }, index) => {
@@ -223,40 +155,3 @@ const resetData = () => {
 };
 
 resetData();
-
-const addDemoBlocks = workspace => {
-  const chart = workspace.newBlock('combination_chart');
-  chart.setFieldValue('horizontal', 'ORIENTATION');
-  chart.setFieldValue(0.7, 'BAND_SCALE_PADDING');
-  chart.initSvg();
-  chart.render();
-
-  const valueAxis = workspace.newBlock('value_axis');
-  valueAxis.setFieldValue('rgba(0,0,0,0)', 'TICK_COLOR');
-  chart.nextConnection.connect(valueAxis.previousConnection);
-  valueAxis.initSvg();
-  valueAxis.render();
-
-  const bandAxis = workspace.newBlock('band_axis');
-  bandAxis.setFieldValue('rgba(0,0,0,0)', 'TICK_COLOR');
-  valueAxis.nextConnection.connect(bandAxis.previousConnection);
-  bandAxis.initSvg();
-  bandAxis.render();
-
-  const stackedBarChart = workspace.newBlock('stacked_bar_chart');
-  bandAxis.nextConnection.connect(stackedBarChart.previousConnection);
-  stackedBarChart.initSvg();
-  stackedBarChart.render();
-  
-  const COLORS = ['#B3E5FC', '#03A9F4', '#CC0000'];
-  let previousConnection = stackedBarChart.getFirstStatementConnection();
-  MEASURES.forEach((m, index) => {
-    const measure = workspace.newBlock('measure_settings');
-    measure.setFieldValue(m, 'MEASURE');
-    measure.setFieldValue(COLORS[index], 'COLOR');
-    previousConnection.connect(measure.previousConnection);
-    previousConnection = measure.nextConnection;
-    measure.initSvg();
-    measure.render();
-  });
-};

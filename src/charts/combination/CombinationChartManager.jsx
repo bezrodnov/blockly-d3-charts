@@ -40,13 +40,8 @@ class ChartBuilder {
     return this;
   }
 
-  addValueAxis(cfg) {
-    this.chart.axises.push({ type: 'value', ...cfg });
-    return this;
-  }
-
-  addBandAxis(cfg) {
-    this.chart.axises.push({ type: 'band', ...cfg });
+  addAxis(axis) {
+    this.chart.axises.push(axis);
     return this;
   }
 
