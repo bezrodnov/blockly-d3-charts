@@ -9,27 +9,27 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-export default class BarChartWrapper extends Component {
+export default class BarChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => <BarChart store={store} {...this.props} />}
+        {store => <BarChartInternal store={store} {...this.props} />}
       </ChartContext.Consumer>
     );
   }
 }
 
-BarChartWrapper.propTypes = {
+BarChart.propTypes = {
   measure: PropTypes.string.isRequired,
   color: PropTypes.string.isRequired,
   formatTooltip: PropTypes.func,
 };
-BarChartWrapper.defaultProps = {
+BarChart.defaultProps = {
   formatTooltip: (dimension, value) => 
     `${dimension}: ${numeral(value).format('0.[0]a')}`,
 };
 
-class BarChart extends Component {
+class BarChartInternal extends Component {
   render() {
     return (
       <Fragment>
@@ -174,11 +174,11 @@ class BarChart extends Component {
   }
 }
 
-observer(BarChart);
-applyDecorators(BarChart, {
+observer(BarChartInternal);
+applyDecorators(BarChartInternal, {
   chartId: [observable],
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],
 });
-BarChart.displayName = 'BarChart';
+BarChartInternal.displayName = 'BarChart';

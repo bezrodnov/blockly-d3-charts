@@ -9,30 +9,30 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-class StackedBarChartWrapper extends Component {
+class StackedBarChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => <StackedBarChart store={store} {...this.props} />}
+        {store => <StackedBarChartInternal store={store} {...this.props} />}
       </ChartContext.Consumer>
     );
   }
 }
 
-StackedBarChartWrapper.propTypes = {
+StackedBarChart.propTypes = {
   measures: PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string.isRequired,
     color: PropTypes.string.isRequired,
   })).isRequired,
   formatTooltip: PropTypes.func,
 };
-StackedBarChartWrapper.defaultProps = {
+StackedBarChart.defaultProps = {
   formatTooltip: (dimension, value) =>
     `${dimension}: ${numeral(value).format('0.[0]a')}`,
 };
-export default StackedBarChartWrapper;
+export default StackedBarChart;
 
-class StackedBarChart extends Component {
+class StackedBarChartInternal extends Component {
   render() {
     return (
       <Fragment>
@@ -200,9 +200,9 @@ class StackedBarChart extends Component {
   }
 }
 
-observer(StackedBarChart);
-applyDecorators(StackedBarChart, {
+observer(StackedBarChartInternal);
+applyDecorators(StackedBarChartInternal, {
   chartId: [observable],
   onMouseOut: [autobind],
 });
-StackedBarChart.displayName = 'StackedBarChart';
+StackedBarChartInternal.displayName = 'StackedBarChart';

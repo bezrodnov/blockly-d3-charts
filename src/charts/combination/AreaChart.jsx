@@ -9,28 +9,28 @@ import numeral from 'numeral';
 import ChartContext from './ChartContext';
 import Tooltip from './Tooltip';
 
-class AreaChartWrapper extends Component {
+class AreaChart extends Component {
   render() {
     return (
       <ChartContext.Consumer>
-        {store => <AreaChart store={store} {...this.props} />}
+        {store => <AreaChartInternal store={store} {...this.props} />}
       </ChartContext.Consumer>
     );
   }
 }
 
-AreaChartWrapper.propTypes = {
+AreaChart.propTypes = {
   measure: PropTypes.string.isRequired,
   color: PropTypes.string.isRequired,
   formatTooltip: PropTypes.func,
 };
-AreaChartWrapper.defaultProps = {
+AreaChart.defaultProps = {
   formatTooltip: (dimension, value) =>
     `${dimension}: ${numeral(value).format('0.[0]a')}`,
 };
-export default AreaChartWrapper;
+export default AreaChart;
 
-class AreaChart extends Component {
+class AreaChartInternal extends Component {
   render() {
     return (
       <Fragment>
@@ -174,11 +174,11 @@ class AreaChart extends Component {
   }
 }
 
-observer(AreaChart);
-applyDecorators(AreaChart, {
+observer(AreaChartInternal);
+applyDecorators(AreaChartInternal, {
   chartId: [observable],
   getMeasureValue: [autobind],
   onMouseMove: [autobind],
   onMouseOut: [autobind],
 });
-AreaChart.displayName = 'AreaChart';
+AreaChartInternal.displayName = 'AreaChart';
