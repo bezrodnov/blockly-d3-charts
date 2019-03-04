@@ -72,7 +72,7 @@ class Axis extends Component {
     
     const ticks = d3.select(this.axisRef).selectAll('g.tick').nodes();
     ticks.forEach((tick, i) => {
-      const isCircle = i === data.length - 1;
+      const isCircle = i === data.length - 1 || i === 0;
       const selection = d3.select(tick);
       const transform = selection.attr('transform')
         + ` translate(${isVertical ? 0 : -20}, ${isVertical ? 20 : 0})`;
@@ -88,6 +88,15 @@ class Axis extends Component {
         .attr('height', 10)
         .attr('stroke', transitionColor)
         .attr('stroke-width', 2);
+      
+      if (i === 0) {
+        selection
+          .append('circle')
+          .attr('r', 1)
+          .attr('cx', isCircle && !isVertical ? 5 : 0)
+          .attr('stroke', transitionColor)
+          .attr('stroke-width', 2);
+      }
       
       if (i < data.length - 1) {
         const nextTick = ticks[i + 1];
