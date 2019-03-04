@@ -17,31 +17,13 @@ import CombinationChartManager
 const { Blockly } = window;
 Blockly.FieldColour.COLOURS.push('rgba(0,0,0,0)');
 
-const data = observable([]);
-const MEASURES = ['Other', 'Blocked Holds', 'Non-blocked Holds'];
-
-const resetData = () => {
-  const bands = ['Draft', 'Awaiting', 'Tendered', 'Confirmed', 'Pick Ready', 'In Transit',
-    'Arrived', 'Delivery Ready', 'Delivered'].reverse();
-  
-  const rndVal = () => Math.random() > 0.05
-    ? Math.round(Math.random() * 100)
-    : undefined;
-
-  data.length = 0;
-  bands.forEach(band => {
-    const measures = MEASURES.reduce((measureValues, measure) => {
-      measureValues[measure] = rndVal();
-      return measureValues;
-    }, {});
-    
-    data.push([band, measures]);
-  });
-};
-
-resetData();
-
 class App extends Component {
+  constructor() {
+    super(...arguments);
+
+    this.state = { collapsed: false };
+  }
+
   componentDidMount() {
     this.workspace = Blockly.inject('blocklyDiv', {
       toolbox: document.getElementById('toolbox'),
@@ -63,6 +45,12 @@ class App extends Component {
     });
 
     addDemoBlocks(this.workspace);
+
+    if (window.localStorage && window.localStorage.getItem('react-charts-default-collapsed') !== 'false') {
+      setTimeout(() => {
+        this.setState({ collapsed: true });
+      }, 1000);
+    }
   }
 
   render() {
@@ -71,7 +59,7 @@ class App extends Component {
       onClick={this.onCollapserClick}
       role="button"
       tabIndex="-1"
-      title="Click to collaps/expand"
+      title="Click to collapse/expand"
     />;
     return (
       <div style={containerStyle}>
@@ -120,6 +108,9 @@ class App extends Component {
   }
 
   onCollapserClick() {
+    if (window.localStorage) {
+      window.localStorage.setItem('react-charts-default-collapsed', !this.isCollapsed);
+    }
     this.setState({ collapsed: !this.isCollapsed });
   }
 
@@ -208,6 +199,30 @@ const buildChartFromConfig = ({ type, config }, index) => {
   }
   return null;
 };
+
+const data = observable([]);
+const MEASURES = ['Other', 'Blocked Holds', 'Non-blocked Holds'];
+
+const resetData = () => {
+  const bands = ['Draft', 'Awaiting', 'Tendered', 'Confirmed', 'Pick Ready', 'In Transit',
+    'Arrived', 'Delivery Ready', 'Delivered'].reverse();
+  
+  const rndVal = () => Math.random() > 0.05
+    ? Math.round(Math.random() * 100)
+    : undefined;
+
+  data.length = 0;
+  bands.forEach(band => {
+    const measures = MEASURES.reduce((measureValues, measure) => {
+      measureValues[measure] = rndVal();
+      return measureValues;
+    }, {});
+    
+    data.push([band, measures]);
+  });
+};
+
+resetData();
 
 const addDemoBlocks = workspace => {
   const chart = workspace.newBlock('combination_chart');
