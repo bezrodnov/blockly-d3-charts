@@ -17,7 +17,7 @@ Blockly.Blocks['area_chart'] = {
       
     this.appendDummyInput()
       .appendField('color:')
-      .appendField(new Blockly.FieldColour('#ff0000'), 'COLOR');
+      .appendField(new Blockly.FieldColour('#0F0'), 'COLOR');
     
     this.setInputsInline(true);
     this.setOutput(false);
@@ -27,10 +27,6 @@ Blockly.Blocks['area_chart'] = {
 };
 
 Blockly.JavaScript['area_chart'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-  
   const measure = block.getFieldValue('MEASURE');
   const color = block.getFieldValue('COLOR');
   const output = `\n  .addChart('area', {measure:'${measure}',color:'${color}'})`;

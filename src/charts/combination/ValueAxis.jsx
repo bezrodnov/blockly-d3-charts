@@ -53,7 +53,7 @@ class Axis extends Component {
 
     const transform = `translate(
       ${isVertical ? this.offsetLeft : this.marginLeft},
-      ${isVertical ? this.marginLeft : this.offsetTop}
+      ${isVertical ? this.marginTop : this.offsetTop}
     )`;
     this.axisRef.setAttribute('transform', transform);
 

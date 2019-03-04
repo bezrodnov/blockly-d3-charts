@@ -55,6 +55,11 @@ class ChartBuilder {
     return this;
   }
 
+  setBandScalePadding(bandScalePadding) {
+    this.chart.bandScalePadding = bandScalePadding;
+    return this;
+  }
+
   build() {
     this.onFinish(this.chart);
   }

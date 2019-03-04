@@ -14,7 +14,7 @@ Blockly.Blocks['measure_settings'] = {
       
     this.appendDummyInput()
       .appendField('color:')
-      .appendField(new Blockly.FieldColour('#ff0000'), 'COLOR');
+      .appendField(new Blockly.FieldColour('#00F'), 'COLOR');
     
     this.setInputsInline(true);
     this.setOutput(false);
@@ -23,13 +23,8 @@ Blockly.Blocks['measure_settings'] = {
 };
 
 Blockly.JavaScript['measure_settings'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-
   const measure = block.getFieldValue('MEASURE');
   const color = block.getFieldValue('COLOR');
-  
   return `\n    { name: '${measure}', color: '${color}' },`
     + Blockly.JavaScript.statementToCode(
       block,

@@ -16,10 +16,6 @@ Blockly.Blocks['stacked_bar_chart'] = {
 };
 
 Blockly.JavaScript['stacked_bar_chart'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-
   const measures = Blockly.JavaScript.statementToCode(block, 'MEASURES');
   const output = `\n  .addChart('stackedbar', {measures:[${measures}]})`;
   return Blockly.JavaScript.joinCombinationChartElements(block, output);

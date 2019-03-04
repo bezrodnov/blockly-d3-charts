@@ -5,6 +5,7 @@ class CombinationChartStore {
   constructor(props) {
     Object.assign(this, props);
     this.orientation = this.orientation || 'vertical';
+    this.bandScalePadding = this.bandScalePadding || 0.5;
 
     this.charts = new Map();
   }
@@ -22,6 +23,10 @@ class CombinationChartStore {
 
   setOrientation(orientation) {
     this.orientation = orientation;
+  }
+
+  setBandScalePadding(bandScalePadding) {
+    this.bandScalePadding = bandScalePadding;
   }
 
   /**
@@ -103,7 +108,7 @@ class CombinationChartStore {
     return d3.scaleBand()
       .range([start, end])
       .domain(this.data.map(d => d[0]))
-      .padding(0.1);
+      .padding(this.bandScalePadding);
   }
 
   get minValue() {
@@ -138,6 +143,7 @@ decorate(CombinationChartStore, {
   charts: observable,
   svg: observable,
   orientation: observable,
+  bandScalePadding: observable,
   
   valueScale: computed,
   bandScale: computed,
@@ -153,6 +159,7 @@ decorate(CombinationChartStore, {
   removeChart: action,
   setChartMinMaxValue: action,
   setOrientation: action,
+  setBandScalePadding: action,
 });
 export default CombinationChartStore;
 

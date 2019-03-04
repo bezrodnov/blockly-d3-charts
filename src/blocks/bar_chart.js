@@ -27,10 +27,6 @@ Blockly.Blocks['bar_chart'] = {
 };
 
 Blockly.JavaScript['bar_chart'] = block => {
-  if (block.getRootBlock().type !== 'combination_chart') {
-    return '';
-  }
-
   const measure = block.getFieldValue('MEASURE');
   const color = block.getFieldValue('COLOR');
   const output = `\n  .addChart('bar', {measure:'${measure}',color:'${color}'})`;
