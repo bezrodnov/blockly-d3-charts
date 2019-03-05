@@ -50,7 +50,7 @@ class CombinationChart extends Component {
     const { children, store } = this.props;
     return (
       <div style={this.style}>
-        <svg ref={this.svgRef}>
+        <svg ref={this.svgRef} style={{ shapeRendering: 'crispEdges' }}>
           <ChartContext.Provider value={store}>
             {children}
           </ChartContext.Provider>
