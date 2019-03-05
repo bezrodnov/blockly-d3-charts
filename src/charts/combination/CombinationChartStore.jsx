@@ -103,8 +103,8 @@ class CombinationChartStore {
   }
 
   get bandScale() {
-    const start = this.isVertical ? 0 : this.height;
-    const end = this.isVertical ? this.width : 0;
+    const start = 0;
+    const end = this.isVertical ? this.width : this.height;
     return d3.scaleBand()
       .range([start, end])
       .domain(this.data.map(d => d[0]))
@@ -130,7 +130,7 @@ class CombinationChartStore {
         maxValue = value;
       }
     }
-    return maxValue;
+    return maxValue || 100;
   }
 
   get isVertical() {

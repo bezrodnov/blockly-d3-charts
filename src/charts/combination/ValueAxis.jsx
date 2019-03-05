@@ -47,7 +47,7 @@ class Axis extends Component {
       // text anchor/position, which occurres when position changes
       delete this.axisRef.__axis;
       d3.select(this.axisRef).selectAll('*').remove();
-      this.axisRef.remove();
+      this.axisRef.parentNode.removeChild(this.axisRef);
     }
     this.axisRef = svg.append('g').node();
 
@@ -101,7 +101,7 @@ class Axis extends Component {
 
   componentWillUnmount() {
     if (this.axisRef) {
-      this.axisRef.remove();
+      this.axisRef.parentNode.removeChild(this.axisRef);
     }
   }
 }

@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import { observer } from 'mobx-react';
 import * as d3 from 'd3';
 
-import ChartContext from './charts/combination/ChartContext';
+import ChartContext from '../combination/ChartContext';
 
-class BandStateMachineAxis extends Component {
+class StateSummaryAxis extends Component {
   render() {
     return (
       <ChartContext.Consumer>
@@ -15,7 +15,7 @@ class BandStateMachineAxis extends Component {
   }
 }
 
-BandStateMachineAxis.propTypes = {
+StateSummaryAxis.propTypes = {
   verticalPosition: PropTypes.oneOf(['top', 'bottom', 'zero']),
   horizontalPosition: PropTypes.oneOf(['left', 'right', 'zero']),
   labelColor: PropTypes.string,
@@ -23,7 +23,7 @@ BandStateMachineAxis.propTypes = {
   axisColor: PropTypes.string,
 };
 
-BandStateMachineAxis.defaultProps = {
+StateSummaryAxis.defaultProps = {
   verticalPosition: 'bottom',
   horizontalPosition: 'left',
   labelColor: '#33F',
@@ -32,8 +32,8 @@ BandStateMachineAxis.defaultProps = {
   transitionColor: '#C9C9D3',
 };
 
-BandStateMachineAxis.displayName = 'BandStateMachineAxis';
-export default BandStateMachineAxis;
+StateSummaryAxis.displayName = 'StateSummaryAxis';
+export default StateSummaryAxis;
 
 class Axis extends Component {
   render() {
@@ -47,7 +47,7 @@ class Axis extends Component {
       // text anchor/position, which occurres when position changes
       delete this.axisRef.__axis;
       d3.select(this.axisRef).selectAll('*').remove();
-      this.axisRef.remove();
+      this.axisRef.parentNode.removeChild(this.axisRef);
     }
     this.axisRef = svg.append('g').node();
 
@@ -89,7 +89,7 @@ class Axis extends Component {
         .attr('stroke', transitionColor)
         .attr('stroke-width', 2);
       
-      if (i === 0) {
+      if (i === data.length - 1) {
         selection
           .append('circle')
           .attr('r', 1)
@@ -104,10 +104,10 @@ class Axis extends Component {
         const r2 = nextTick.firstChild.getBoundingClientRect();
         
         selection.append('line')
-          .attr('x2', isVertical ? 17 : 5)
-          .attr('y2', isVertical ? 0 : -17)
-          .attr('x1', isVertical ? r2.left - r1.left - 15 : 5)
-          .attr('y1', isVertical ? 0 : r2.top - r1.top + 8)
+          .attr('x1', isVertical ? 10 : 5)
+          .attr('y1', isVertical ? 0 : 10)
+          .attr('x2', isVertical ? r2.left - r1.left - 18 : 5)
+          .attr('y2', isVertical ? 0 : r2.top - r1.top - 18)
           .attr('stroke', transitionColor)
           .attr('stroke-width', 1)
           .attr('marker-end', 'url(#state-machine-axis-arrow)');
@@ -157,7 +157,7 @@ class Axis extends Component {
 
   componentWillUnmount() {
     if (this.axisRef) {
-      this.axisRef.remove();
+      this.axisRef.parentNode.removeChild(this.axisRef);
     }
   }
 }

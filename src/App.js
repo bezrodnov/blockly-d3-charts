@@ -9,11 +9,12 @@ import BandAxis from './charts/combination/BandAxis';
 import ValueAxis from './charts/combination/ValueAxis';
 import StackedBarChart from './charts/combination/StackedBarChart';
 
-import BandStateMachineAxis from './BandStateMachineAxis';
+import StateSummaryAxis from './charts/state/StateSummaryAxis';
 
 import CombinationChartManager
   from './charts/combination/CombinationChartManager';
 import BlocklyContainer from './BlocklyContainer';
+import StateSummaryChartWidget from './charts/state/StateSummaryChartWidget';
 
 class App extends Component {
   render() {
@@ -28,6 +29,7 @@ class App extends Component {
           </div>
           <div style={chartContainerStyle}>
             {this.renderCharts()}
+            {this.renderStateSummaryWidget()}
           </div>
         </div>
       </div>
@@ -55,6 +57,12 @@ class App extends Component {
       }
     }
     return charts;
+  }
+
+  renderStateSummaryWidget() {
+    return <StateSummaryChartWidget
+      data={data}
+    />;
   }
 
   get controlsStyle() {
@@ -104,7 +112,7 @@ const buildAxisFromConfig = (axis, index) => {
     case 'band':
       return <BandAxis {...cfg} />;
     case 'band_state_machine':
-      return <BandStateMachineAxis {...cfg} />;
+      return <StateSummaryAxis {...cfg} />;
   }
   return null;
 };
@@ -133,11 +141,11 @@ const buildChartFromConfig = ({ type, config }, index) => {
 };
 
 const data = observable([]);
-const MEASURES = ['Other', 'Blocked Holds', 'Non-blocked Holds'];
+const MEASURES = ['Counts', 'Blocked Holds', 'Non-blocked Holds'];
 
 const resetData = () => {
   const bands = ['Draft', 'Awaiting', 'Tendered', 'Confirmed', 'Pick Ready', 'In Transit',
-    'Arrived', 'Delivery Ready', 'Delivered'].reverse();
+    'Arrived', 'Delivery Ready', 'Delivered', 'Multi Modal'];
   
   const rndVal = () => Math.random() > 0.05
     ? Math.round(Math.random() * 33)

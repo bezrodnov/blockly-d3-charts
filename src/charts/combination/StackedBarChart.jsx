@@ -146,15 +146,6 @@ class StackedBarChartInternal extends Component {
     }
   }
 
-  getValues(data) {
-    return data.reduce((values, dataEntry) => {
-      this.props.measures.forEach((measure, index) => {
-        values.push(this.getMeasureValue(dataEntry, index));
-      });
-      return values;
-    }, []);
-  }
-
   getMeasureValue(dataEntry, measureIndex) {
     return this.props.measures.reduce((value, measureConfig, i) => {
       if (measureIndex <= i) {
